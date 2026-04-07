@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash-lite')
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 def _has_korean(text):
     return text and any('\uAC00' <= c <= '\uD7A3' for c in text)

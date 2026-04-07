@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash-lite')
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 def _call_gemini_with_retry(prompt, max_retries=3):
     """Gemini API 호출 (지수 백오프 재시도)"""
