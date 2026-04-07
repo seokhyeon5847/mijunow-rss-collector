@@ -335,27 +335,37 @@ def collect_single_feed(site: str, feed_info: Dict, use_sheets: bool = True) -> 
             # HTML 태그 제거
             summary = re.sub(r'<[^>]+>', '', summary)
             
-            # published_date 처리
+            # published_date 처리 (UTC 기준)
             published_date = ''
+            pub_dt = None
             if hasattr(entry, 'published_parsed') and entry.published_parsed:
                 try:
-                    published_date = datetime(*entry.published_parsed[:6]).strftime('%Y-%m-%d %H:%M:%S')
+                    pub_dt = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+                    published_date = pub_dt.strftime('%Y-%m-%d %H:%M:%S')
                 except:
-                    published_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            else:
-                published_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
+                    pub_dt = None
+
+            # published_date 없으면 updated_parsed 시도
+            if not pub_dt and hasattr(entry, 'updated_parsed') and entry.updated_parsed:
+                try:
+                    pub_dt = datetime(*entry.updated_parsed[:6], tzinfo=timezone.utc)
+                    published_date = pub_dt.strftime('%Y-%m-%d %H:%M:%S')
+                except:
+                    pub_dt = None
+
+            # 날짜 정보 없으면 스킵 (오래된 뉴스 유입 방지)
+            if not pub_dt:
+                continue
+
             # 빈 데이터 체크
             if not title or not link:
                 continue
 
-            # 24시간 이상 된 기사 필터링
-            try:
-                pub_dt = datetime.strptime(published_date, '%Y-%m-%d %H:%M:%S')
-                if (datetime.now() - pub_dt).total_seconds() > 86400:
-                    continue
-            except:
-                pass  # 파싱 실패 시 통과 (최신으로 간주)
+            # 12시간 이상 된 기사 필터링 (더 엄격하게)
+            now_utc = datetime.now(timezone.utc)
+            age_hours = (now_utc - pub_dt).total_seconds() / 3600
+            if age_hours > 12:
+                continue
 
             # 광고/칼럼/의견성 콘텐츠 원천 차단 (팩트 기반 뉴스만 수집)
             if NOISE_PATTERNS.search(title) or NOISE_PATTERNS.search(summary[:300]):
