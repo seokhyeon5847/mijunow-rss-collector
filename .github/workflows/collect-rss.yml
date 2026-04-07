@@ -1,0 +1,31 @@
+name: RSS News Collector
+
+on:
+  schedule:
+    # 15분마다 실행 (UTC) - GitHub Actions 최소 간격 5분
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # 수동 실행 가능
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run RSS collection
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: python run_collect.py
