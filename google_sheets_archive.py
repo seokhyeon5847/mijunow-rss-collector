@@ -288,11 +288,14 @@ class GoogleSheetsArchive:
             
             # Gemini 요약문 및 메타데이터 (있으면 사용)
             summary_data = summaries.get(link, {})
-            gemini_summary = summary_data.get('summary', summary)
+            gemini_summary = summary_data.get('summary', '')
+            # 번역된 한국어가 있으면 요약으로 사용
+            if not gemini_summary:
+                gemini_summary = news.get('summary_kr', '') or news.get('title_kr', '') or summary
             category = summary_data.get('category', '')
             priority = summary_data.get('priority', '')
             tickers = summary_data.get('tickers', '')
-            buzz_score = summary_data.get('buzz_score', '5')
+            buzz_score = summary_data.get('buzz_score', '')
             
             # 티커가 없으면 제목과 요약에서 추출
             if not tickers:
@@ -330,12 +333,15 @@ class GoogleSheetsArchive:
             # 분석 여부 (기본값 FALSE)
             analyzed = 'FALSE'
             
+            # 번역된 제목이 있으면 사용
+            display_title = news.get('title_kr', '') or title
+
             # 행 데이터 (확장된 구조)
             row_data = [
                 date_str,      # A열: 날짜
                 time_str,      # B열: 시간
                 site,          # C열: 사이트명
-                title,         # D열: 뉴스 제목
+                display_title, # D열: 뉴스 제목 (한국어 번역 우선)
                 link,          # E열: 원문 링크 (RSS 피드 실제 링크)
                 gemini_summary, # F열: Gemini 요약문 (한국어)
                 category,      # G열: 카테고리 태그
